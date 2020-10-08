@@ -1,0 +1,439 @@
+---
+title: "Forecasting Harga Beras"
+output: html_document:
+---
+# Project Background
+Beras adalah bahan makanan pokok di Indonesia. Hampir semua orang Indonesia yang memasak sendiri dirumah membeli beras. Harga beras pun jika dilihat dari data yang didapat, setiap tahun naik. Oleh karena itu, melakukan forecast terhadap data beras dapat membantu dari sisi penjual dan pembeli.
+
+# Problem Understanding
+Memprediksi harga beras untuk tahun 2020, apakah harga akan naik atau turun berdasarkan data historis, 
+
+# Data Collection
+data diambil dari [Badan Pusat Stasistik](bps.go.id) mengenai Harga Perdagagangan Besar, Rata-rata Harga Beras di Tingkat Perdagangan Besar (Grosir) Indonesia, 2010-2020. Data dapat dibilang valid dan terpercaya karena diambil dari BPS Indonesia.
+
+# Data Preparation
+Data akan digabungkan dari beberapa csv yang memiliki data historis harga beras per
+
+# Application in Real Life and Other Businesses
+Hasil prediksi dapat di gunakan untuk pengusaha beras yang ingin melihat perkembangan harga beras untuk tahun 2020 dan pengambilan keputusan stock beras.
+Hasil prediksi dapat digunakan untuk pembeli beras untuk melihat harga di tahun 2020 pergerakannya seperti apa. 
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(zoo)
+library(lubridate)
+library(ggplot2)
+library(anytime)
+library(forecast)
+library(TSstudio)
+library(MLmetrics)
+```
+
+# Read Data and Data Cleaning
+```{r}
+beras_2019 <- read.csv("2019.csv") %>% 
+  rename("2019-01" = Januari,
+         "2019-02" = Februari,
+         "2019-03" = Maret,
+         "2019-04" = April,
+         "2019-05" = Mei,
+         "2019-06" = Juni,
+         "2019-07" = Juli,
+         "2019-08" = Agustus,
+         "2019-09" = September,
+         "2019-10" = Oktober,
+         "2019-11" = November,
+         "2019-12" = Desember) %>% 
+  select(-Tahunan)
+
+
+beras_2018 <- read.csv("2018.csv") %>% 
+  rename("2018-01" = Januari,
+         "2018-02" = Februari,
+         "2018-03" = Maret,
+         "2018-04" = April,
+         "2018-05" = Mei,
+         "2018-06" = Juni,
+         "2018-07" = Juli,
+         "2018-08" = Agustus,
+         "2018-09" = September,
+         "2018-10" = Oktober,
+         "2018-11" = November,
+         "2018-12" = Desember) %>% 
+  select(-Tahunan)
+
+
+beras_2017 <- read.csv("2017.csv") %>% 
+  rename("2017-01" = Januari,
+         "2017-02" = Februari,
+         "2017-03" = Maret,
+         "2017-04" = April,
+         "2017-05" = Mei,
+         "2017-06" = Juni,
+         "2017-07" = Juli,
+         "2017-08" = Agustus,
+         "2017-09" = September,
+         "2017-10" = Oktober,
+         "2017-11" = November,
+         "2017-12" = Desember) %>% 
+  select(-Tahunan)
+
+
+beras_2016 <- read.csv("2016.csv") %>% 
+  rename("2016-01" = Januari,
+         "2016-02" = Februari,
+         "2016-03" = Maret,
+         "2016-04" = April,
+         "2016-05" = Mei,
+         "2016-06" = Juni,
+         "2016-07" = Juli,
+         "2016-08" = Agustus,
+         "2016-09" = September,
+         "2016-10" = Oktober,
+         "2016-11" = November,
+         "2016-12" = Desember) %>% 
+  select(-Tahunan)
+
+
+beras_2015 <- read.csv("2015.csv") %>% 
+  rename("2015-01" = Januari,
+         "2015-02" = Februari,
+         "2015-03" = Maret,
+         "2015-04" = April,
+         "2015-05" = Mei,
+         "2015-06" = Juni,
+         "2015-07" = Juli,
+         "2015-08" = Agustus,
+         "2015-09" = September,
+         "2015-10" = Oktober,
+         "2015-11" = November,
+         "2015-12" = Desember) %>% 
+  select(-Tahunan)
+
+
+beras_2014 <- read.csv("2014.csv") %>% 
+  rename("2014-01" = Januari,
+         "2014-02" = Februari,
+         "2014-03" = Maret,
+         "2014-04" = April,
+         "2014-05" = Mei,
+         "2014-06" = Juni,
+         "2014-07" = Juli,
+         "2014-08" = Agustus,
+         "2014-09" = September,
+         "2014-10" = Oktober,
+         "2014-11" = November,
+         "2014-12" = Desember) %>% 
+  select(-Tahunan)
+
+
+beras_2013 <- read.csv("2013.csv") %>% 
+  rename("2013-01" = Januari,
+         "2013-02" = Februari,
+         "2013-03" = Maret,
+         "2013-04" = April,
+         "2013-05" = Mei,
+         "2013-06" = Juni,
+         "2013-07" = Juli,
+         "2013-08" = Agustus,
+         "2013-09" = September,
+         "2013-10" = Oktober,
+         "2013-11" = November,
+         "2013-12" = Desember) %>% 
+  select(-Tahunan)
+
+
+beras_2012 <- read.csv("2012.csv") %>% 
+  rename("2012-01" = Januari,
+         "2012-02" = Februari,
+         "2012-03" = Maret,
+         "2012-04" = April,
+         "2012-05" = Mei,
+         "2012-06" = Juni,
+         "2012-07" = Juli,
+         "2012-08" = Agustus,
+         "2012-09" = September,
+         "2012-10" = Oktober,
+         "2012-11" = November,
+         "2012-12" = Desember) %>% 
+  select(-Tahunan)
+
+
+beras_2011 <- read.csv("2011.csv") %>% 
+  rename("2011-01" = Januari,
+         "2011-02" = Februari,
+         "2011-03" = Maret,
+         "2011-04" = April,
+         "2011-05" = Mei,
+         "2011-06" = Juni,
+         "2011-07" = Juli,
+         "2011-08" = Agustus,
+         "2011-09" = September,
+         "2011-10" = Oktober,
+         "2011-11" = November,
+         "2011-12" = Desember) %>% 
+  select(-Tahunan)
+
+
+beras_2010 <- read.csv("2010.csv") %>% 
+  rename("2010-01" = Januari,
+         "2010-02" = Februari,
+         "2010-03" = Maret,
+         "2010-04" = April,
+         "2010-05" = Mei,
+         "2010-06" = Juni,
+         "2010-07" = Juli,
+         "2010-08" = Agustus,
+         "2010-09" = September,
+         "2010-10" = Oktober,
+         "2010-11" = November,
+         "2010-12" = Desember) %>% 
+  select(-Tahunan)
+
+
+beras <- beras_2010 %>% 
+  left_join(beras_2011) %>% 
+  left_join(beras_2012) %>% 
+  left_join(beras_2013) %>% 
+  left_join(beras_2014) %>% 
+  left_join(beras_2015) %>% 
+  left_join(beras_2016) %>% 
+  left_join(beras_2017) %>% 
+  left_join(beras_2018) %>% 
+  left_join(beras_2019)
+
+beras <- beras %>% 
+  select(-X) %>% 
+  gather(key = Monthly, value = Price)
+
+beras
+```
+Data historis beras disatukan semua untuk mendapatkan satu dataframe yang mencakup semua data.
+
+
+Karena data `Price` seharusnya numeric, maka perlu di hilangkan wwhitespace dari isi kolom.
+```{r}
+beras$Price <- gsub(pattern = " ", replacement = "", x = beras$Price)
+```
+
+```{r}
+beras <- beras %>% 
+  mutate(Monthly = anydate(Monthly),
+         Monthly = ymd(Monthly),
+         Price = as.numeric(Price))
+beras
+```
+
+
+```{r}
+range(beras$Monthly)
+```
+
+
+```{r}
+colSums(is.na(beras))
+```
+
+```{r}
+summary(beras)
+```
+
+
+```{r}
+beras %>% 
+  ggplot(aes(x = Monthly, y = Price)) +
+  geom_line() +
+  labs(title = "Pergerakan Harga Beras Tahun 2010 - 2019",
+       x = "Tahun",
+       y = "harga") +
+  theme_minimal() 
+```
+
+```{r}
+beras_ts <- ts(beras$Price, frequency = 12)
+beras_ts %>% 
+  decompose() %>% 
+  autoplot()
+```
+# Cross Validation
+Sebelum membuat model, data harrus dibagi menjadi 2 bagian, data untuk training model, validasi model dan testing model. data training akan mencakup data beras dari tahun 2010 - 2018. data validasi model akan mencakup data 2019 dan data testing akan melakukan forecasting untuk tahun 2020.
+```{r}
+# Validation mengabil 12 data terakhir
+beras_val <- beras_ts %>% 
+  tail(12)
+
+# Train mengambil semua data kecuali data Val
+beras_train <- head(beras_ts, length(beras_ts) - length(beras_val))
+
+beras_test <- 12 # Test = 12 untuk melakukan forecast 12 bulan kedepan
+```
+
+# Fitting Model
+## ETS
+Pada model ETS ini, akan digunakan Holt Winters / Triple Exponential Smoothing model dimana data memmiliki seasonal, trend dan error.
+```{r}
+beras_ets <- ets(y = beras_train, model = "ZZZ")
+beras_ets
+```
+```{r}
+beras_ets_frcst <- forecast(beras_ets, h = 12)
+```
+
+```{r}
+plot_forecast(forecast_obj = beras_ets_frcst)
+```
+
+```{r}
+MAPE(y_pred = beras_ets_frcst$mean, y_true = beras_val)*100
+```
+MAPE didapat 0.5% dan sudah dapat dianggap kecil errornya
+```{r}
+beras_val
+beras_ets_frcst$mean
+```
+
+
+## ARIMA
+Pada ARIMA model, akan digunakan 2 pemodelan, dengan `auto.arima()` dan `ARIMA(p,d,q)(P,D,Q)[m]` atau SARIMA.
+
+### Auto ARIMA
+Pada auto arima, model akan mencari (p,d,q)(P,D,Q)[m] yang optimal, jadi tidak perlu mmencari secara manual, akan tetapi masih bisa di tuning secara manual dengan mencari nilai - nilai tersebut.
+```{r}
+beras_autoarima <- auto.arima(beras_train)
+beras_autoarima
+```
+Hasil dari `auto.arima()` didapatkan:
+ - p = 1
+ - d = 1
+ - q = 0
+ - P = 2
+ - D = 0
+ - Q = 0
+ - m = 12
+
+```{r}
+beras_autoarima_frcst <- forecast(beras_autoarima, h = 12)
+```
+```{r}
+plot_forecast(beras_autoarima_frcst)
+```
+```{r}
+MAPE(y_pred = beras_autoarima_frcst$mean, y_true = beras_val)*100
+```
+MAPE didapat sekitar 2% dimana lebih besar dari hasil model ets errornya
+```{r}
+beras_autoarima_frcst$mean
+beras_val
+```
+
+### SARIMA
+Menentukan `d` dengan menggunakan ADF test dan KPSS test untuk menentukan data stationer atau tidak, dimana pada ADF test p-value < 0.05 dan pada KPsS test p-value > 0.05
+```{r}
+library(tseries)
+adf.test(beras_ts)
+```
+```{r}
+kpss.test(beras_ts)
+```
+Dari hasil test diatass, data masih belum stationer, terlihat juga dari hasil `decompose()` bahwa data memiliki trend dan seasonality. perelu dilakukan `diff()` untuk membuat data stationer.
+```{r}
+beras_diff <- beras_ts %>% 
+  diff(lag = 12) %>% #menghilangkan seasonal perbulan
+  diff(lag = 1)      #menghilangkan trend
+adf.test(beras_diff)
+kpss.test(beras_diff)
+```
+Setelah dilakukan differencing 1x, data sudah stationer. maka d = 1 dan D = 12
+
+Menentukan `p dan q` menggunakan PACF untuk `p` dan ACF untuk `q`
+```{r}
+tsdisplay(beras_diff)
+```
+PACF(p) = cut off setelah 1, 2, 7, 11, 21, maka p dapat diisi dengan angka terssebut
+PACF(P) = tidak ada cutoff pada kelipatan lag 12 maka P = 0
+
+ACF(q) = cut off setelah 1, 4, 11, 12, 15, 21, 24, 32, 33, 36 maka q dapat diisi dengan angka tersebut
+ACF(Q) = ada cutoff pada kelipataan lag = 12 sebanyak 1x maka Q = 1
+
+Menggunakan angka yang mendekati hasil `auto.arima()`
+```{r}
+beras_sarima <- Arima(y = beras_train, order = c(11, 1, 11), seasonal = list(order = c(0, 1, 1), period = 12))
+beras_sarima
+```
+```{r}
+beras_sarima_frcst <- forecast(beras_sarima, h = 12)
+```
+```{r}
+plot_forecast(forecast_obj = beras_sarima_frcst)
+```
+```{r}
+MAPE(y_pred = beras_sarima_frcst$mean, beras_val)*100
+```
+Angka MAPE sebesar 0.9885 % adalah hasil Tuning dengan mengubah nilai `p` dan `q` berdasarkan hasil PACF dan ACF, dimana didapatkan nilai yang memiliki errorr terkecil mmenggunakan p = 11 dan q = 11
+```{r}
+beras_sarima_frcst$mean
+beras_val
+```
+
+## STLM
+```{r}
+beras_stlm <- stlm(y = beras_train, method = "ets")
+```
+
+```{r}
+beras_stlm_frcst <- forecast(beras_stlm, h = 12)
+```
+
+```{r}
+plot_forecast(beras_stlm_frcst)
+```
+
+```{r}
+MAPE(y_pred = beras_stlm_frcst$mean, y_true = beras_val)*100
+```
+Dengan menggunakan model stlm method ets, didapatkan MAPE sebesar 0.6%, sudah dicoba juga dengan menggunakan method arima, akan tetapi hasil MAPE 2%.
+
+```{r}
+beras_stlm_frcst$mean
+beras_val
+```
+
+# Forecasting
+Setelah pembuatan model selesai, selanjutnya akan dilakukan forecast untuk tahun 2020 dengan menggunakan model ets karena MAPE yang didapatkan paling kecil, yaitu 0.5311425 %
+data yang digunakan adalah data full, bukan data train
+```{r}
+beras_model <- ets(beras_ts, model = "ZZZ")
+beras_model
+```
+
+lalu di forecast dengan h = `beras_test` untuk tahun 2020
+```{r}
+beras_forecast <- forecast(beras_model, h = beras_test)
+```
+```{r}
+plot_forecast(beras_forecast)
+```
+
+```{r}
+beras_forecast$mean
+```
+
+# Conclusion
+Hasil dari forecast menunjukan bahwa pada tahun 2020 harga beras sebagai berikut :
+ - Januari   2020 : Rp. 12,317
+ - Februari  2020 : Rp. 12,316
+ - Maret     2020 : Rp. 12,225
+ - April     2020 : Rp. 12,019
+ - Mei       2020 : Rp. 11,952
+ - Juni      2020 : Rp. 11,971
+ - Juli      2020 : Rp. 12,029
+ - Agustus   2020 : Rp. 12,062
+ - September 2020 : Rp. 12,069
+ - Oktober   2020 : Rp. 12,083
+ - November  2020 : Rp. 12,124
+ - Desember  2020 : Rp. 12,230
+ 
+Harga beras termurah menurut forecast ada pada bulan Mei 2020
+Harga beras termahal menurut forecast ada pada bulan Januari 2020
