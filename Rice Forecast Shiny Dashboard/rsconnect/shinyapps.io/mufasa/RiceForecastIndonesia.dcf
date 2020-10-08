@@ -1,0 +1,12 @@
+name: RiceForecastIndonesia
+title: RiceForecastIndonesia
+username:
+account: mufasa
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2843304
+bundleId: 3711765
+url: https://mufasa.shinyapps.io/RiceForecastIndonesia/
+when: 1602055057.18377
+asMultiple: FALSE
+asStatic: FALSE
