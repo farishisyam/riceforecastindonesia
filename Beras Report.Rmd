@@ -227,12 +227,66 @@ beras %>%
 Apabila kita melihat dari data, harga beras di Indonesia dari data historis tahun 2010 - 2019 memiliki tren yang naik terus setiap tahunnya. Dibawah ini adalah pergerakan harga beras yang sudah dihitung rata - rata pertahunnya dan dihitung juga selisih harga beras dari tahun ketahun dalam persen di dalam kolom `Change` dimana kenaikan yang paling besar ada pada tahun 2015 dengan kenaikan harga 13.25%. 
 
 ```{r, echo=FALSE, message=FALSE}
-beras %>% 
+beras_yearly <- beras %>% 
   mutate(Year = year(Monthly)) %>% 
   group_by(Year) %>% 
   summarise(Price_Mean = round(mean(Price), digits = 0)) %>% 
   ungroup() %>%
-  mutate(Change = (Price_Mean - lag(Price_Mean))/lag(Price_Mean)*100)
+  mutate(Change = (Price_Mean - lag(Price_Mean))/lag(Price_Mean)*100) %>% 
+  na.fill(0) %>% 
+  as.data.frame() %>% 
+  mutate(Label = ifelse(Change < lag(Change), "down", "up")) %>% 
+  na.fill("") %>% 
+  as.data.frame()
+
+
+beras_yearly
+```
+
+
+```{r, warning=FALSE}
+change_plot <- beras_yearly %>% 
+  ggplot(aes(x = Year, y = Price_Mean)) +
+  geom_col(aes(fill = Change)) +
+  geom_text(aes(label = round(Change, 2)), vjust = -0.5) +
+  theme_minimal()
+
+ggplotly(change_plot)
+  
+```
+
+
+```{r}
+library(htmltools)
+trend_indicator <- function(value = c("unchanged", "up", "down", "new")) {
+  value <- match.arg(value)
+  label <- value
+  print(label)
+  # Add img role and tooltip/label for accessibility
+  args <- list(role = "img", title = label)
+  if (value == "unchanged") {
+    args <- c(args, list("–", style = "color: #666; font-weight: 700"))
+  } else if (value == "up") {
+    args <- c(args, list(shiny::icon("caret-up"), style = "color: #1ed760"))
+  } else if (value == "down") {
+    args <- c(args, list(shiny::icon("caret-down"), style = "color: #cd1a2b"))
+  } else {
+    args <- c(args, list(shiny::icon("circle"), style = "color: #2e77d0; font-size: 10px"))
+  }
+  do.call(span, args)
+}
+beras_yearly_new <- beras_yearly %>% 
+  mutate(Label = ifelse(Label == "", "unchanged", Label))
+reactable(data = beras_yearly_new,
+          columns = list(
+            Label = colDef(
+              header = span("Trend", class = "sr-only"),
+             sortable = FALSE,
+             align = "center",
+             width = 40,
+             cell = function(value) trend_indicator(value)
+            )
+          ))
 ```
 
 Forecasting data dilakukan untuk mengetahui harga beras untuk tahun 2020. Hasil dari forecast dapat digunakan oleh penjual dan pembeli beras dalam melakukan prediksi harga beras. Penjual dapat melakukan perencanaan stock penjualan, sedangkan pembeli dapat menghitung pengeluaran dana beras untuk tahun 2020.
